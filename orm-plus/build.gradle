@@ -1,0 +1,15 @@
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+dependencies {
+    implementation project(':common')
+    implementation 'com.github.jsqlparser:jsqlparser:4.2'
+    implementation "androidx.room:room-common:2.4.0"
+    implementation "androidx.room:room-runtime:2.4.0"
+    implementation 'com.google.code.gson:gson:2.8.0'
+}

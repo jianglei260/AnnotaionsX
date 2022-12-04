@@ -1,0 +1,29 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "AnnotaionsX"
+include ':app'
+include ':orm-plus'
+include ':common'
+include ':meta-annotation'
+include ':orm-plus-compiler'
+include ':meta-annotation-compiler'
+include ':common-compiler'
+include ':broadcast-manager'
+include ':broadcast-manager-compiler'
+include ':group-recyclerview'
+include ':group-recyclervew-compiler'
+include ':orm-plus-android'
+include ':broadcast-manager-android'
+include ':group-recyclerview-android'

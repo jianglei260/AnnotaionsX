@@ -1,8 +1,26 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_7
-    targetCompatibility = JavaVersion.VERSION_1_7
+afterEvaluate{
+    publishing {
+        publications {
+            // Creates a Maven publication called "myPublication".
+            myPublication(MavenPublication) {
+                from components.java
+                groupId rootProject.ext.groupId
+                version rootProject.ext.version
+            }
+        }
+
+        // Repositories *to* which Gradle can publish artifacts
+        repositories {
+            mavenLocal()
+        }
+    }
 }

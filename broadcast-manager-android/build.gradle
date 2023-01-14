@@ -1,9 +1,10 @@
 plugins {
     id 'com.android.library'
+    id 'maven-publish'
 }
 
 android {
-    namespace 'cn.scewin.broadcast_manager_android'
+    namespace 'cn.scewin.bm'
     compileSdk 32
 
     defaultConfig {
@@ -27,7 +28,22 @@ android {
 }
 
 dependencies {
-    implementation project(':common')
-    implementation project(':broadcast-manager')
-    implementation 'com.google.code.gson:gson:2.8.0'
+    api project(':common')
+    api project(':broadcast-manager')
+    compileOnly 'com.google.code.gson:gson:2.8.0'
+}
+afterEvaluate{
+    publishing {
+        publications {
+            myPublication(MavenPublication) {
+                from components.release
+                groupId rootProject.ext.groupId
+                version rootProject.ext.version
+            }
+        }
+
+        repositories {
+            mavenLocal()
+        }
+    }
 }

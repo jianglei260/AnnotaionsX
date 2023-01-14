@@ -10,6 +10,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.sun.tools.javac.code.Attribute;
+import com.sun.tools.javac.code.Type;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
@@ -226,6 +227,7 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                 methodBuilder.addStatement("$N.$L($N)", varName, callMethodName, currentVarName);
             } else {
                 Object value = elementValues.get(executableElement).getValue();
+//                messager.printMessage(Diagnostic.Kind.NOTE,"------------find class type:"+value.getClass().getName());
                 if (executableElement.getReturnType() instanceof ArrayType) {
                     List<Attribute> attributes = (List<Attribute>) value;
                     List values = new ArrayList();
@@ -243,6 +245,9 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                     values.add(2, ClassName.get(Arrays.class));
                     methodBuilder.addStatement("$N.$L($T.asList(" + codeBuilder + "))", values.toArray());
                 } else {
+                    if (value instanceof Type.ClassType) {
+                        value = ((Type.ClassType) value).toString();
+                    }
                     methodBuilder.addStatement("$N.$L(" + getVarType(value) + ")", varName, callMethodName, value);
                 }
             }
@@ -393,6 +398,9 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
             } else {
                 returnTypeName = TypeName.get(childrenMirror);
             }
+        }
+        if (returnTypeName.equals(TypeName.get(Class.class))) {
+            returnTypeName = TypeName.get(String.class);
         }
         FieldSpec.Builder fieldBuilder = FieldSpec.builder(returnTypeName, name, Modifier.PRIVATE);
         typeBuilder.addField(fieldBuilder.build());

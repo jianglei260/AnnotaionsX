@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 java {
@@ -7,14 +8,26 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 dependencies {
-    implementation project(path: ':orm-plus')
     annotationProcessor 'com.google.auto.service:auto-service:1.0-rc4'
     implementation 'com.google.auto.service:auto-service:1.0-rc4'
     implementation 'com.squareup:javapoet:1.11.1'
-    implementation 'com.google.code.gson:gson:2.8.0'
-    implementation "androidx.room:room-common:2.4.0"
-    implementation 'com.github.jsqlparser:jsqlparser:4.2'
-    implementation project(':common')
+    compileOnly 'com.google.code.gson:gson:2.8.0'
+    compileOnly "androidx.room:room-common:2.4.0"
+    api 'com.github.jsqlparser:jsqlparser:4.2'
     implementation project(':common-compiler')
-    implementation project(':orm-plus')
+    api project(':orm-plus')
+}
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.java
+                // You can then customize attributes of the publication as shown below.
+                groupId = rootProject.ext.groupId
+                version = rootProject.ext.version
+            }
+        }
+    }
 }

@@ -15,16 +15,13 @@
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.codehaus.mojo/animal-sniffer-annotations/1.14/775b7e22fb10026eed3f86e8dc556dfafe35f2d5/animal-sniffer-annotations-1.14.jar" />
         </processorPath>
         <module name="AnnotaionsX.meta-annotation-compiler.main" />
-        <module name="AnnotaionsX.orm-plus-compiler.main" />
-        <module name="AnnotaionsX.common.main" />
         <module name="AnnotaionsX.common-compiler.main" />
+        <module name="AnnotaionsX.orm-plus-compiler.main" />
         <module name="AnnotaionsX.broadcast-manager-compiler.main" />
-        <module name="AnnotaionsX.entity-manager.main" />
-        <module name="AnnotaionsX.entity-manager-compiler.main" />
         <module name="AnnotaionsX.group-recyclervew-compiler.main" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="1.7">
+    <bytecodeTargetLevel target="1.8">
       <module name="AnnotaionsX.entity-manager" target="1.8" />
       <module name="AnnotaionsX.entity-manager-compiler" target="1.8" />
       <module name="AnnotaionsX.entity-manager-compiler.main" target="1.8" />

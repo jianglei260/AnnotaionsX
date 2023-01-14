@@ -83,6 +83,10 @@ public class OrmPlusDatabaseManager {
         }
     }
 
+    public Map<String, EntitiyInfo> getEntitiyInfoMap() {
+        return entitiyInfoMap;
+    }
+
     public int deleteBySQL(String sql) {
         SupportSQLiteStatement statement = db.compileStatement(sql);
         return statement.executeUpdateDelete();

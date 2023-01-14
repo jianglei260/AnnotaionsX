@@ -12,6 +12,7 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
 rootProject.name = "AnnotaionsX"
 include ':app'
 include ':orm-plus'

@@ -44,8 +44,9 @@ public class BroadcastProcessor extends BaseAnnotationProcessor {
                         ReceiveMethod receiveMethod = childelment.getAnnotation(ReceiveMethod.class);
                         if (receiveMethod != null) {
                             TypeSpec receiver = buildReceiverClass(element, (ExecutableElement) childelment, receiveMethod).build();
-                            buildCode(elementsUtils.getPackageOf(element).getQualifiedName().toString(), receiver);
-                            initMethod.addStatement("$T.getInstance().registeReceiver($T.class)", ClassName.bestGuess("cn.scewin.bm.android.BroadcastManageService"), ClassName.bestGuess(receiver.name));
+                            String receiverPackage = elementsUtils.getPackageOf(element).getQualifiedName().toString();
+                            buildCode(receiverPackage, receiver);
+                            initMethod.addStatement("$T.getInstance().registeReceiver($T.class)", ClassName.bestGuess("cn.scewin.bm.android.BroadcastManageService"), ClassName.bestGuess(receiverPackage + "." + receiver.name));
                         }
                     }
                 }

@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 java {
@@ -7,9 +8,21 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 dependencies {
-    implementation project(':common')
-    implementation 'com.github.jsqlparser:jsqlparser:4.2'
-    implementation "androidx.room:room-common:2.4.0"
-    implementation "androidx.room:room-runtime:2.4.0"
-    implementation 'com.google.code.gson:gson:2.8.0'
+    api 'com.github.jsqlparser:jsqlparser:4.2'
+    compileOnly "androidx.room:room-common:2.4.0"
+    compileOnly 'com.google.code.gson:gson:2.8.0'
+}
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.java
+                // You can then customize attributes of the publication as shown below.
+                groupId = rootProject.ext.groupId
+                version = rootProject.ext.version
+            }
+        }
+    }
 }

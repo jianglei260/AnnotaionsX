@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 java {
@@ -7,5 +8,18 @@ java {
     targetCompatibility = JavaVersion.VERSION_1_8
 }
 dependencies {
-    implementation project(':common')
+}
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.java
+                // You can then customize attributes of the publication as shown below.
+                groupId = rootProject.ext.groupId
+                version = rootProject.ext.version
+            }
+        }
+    }
 }

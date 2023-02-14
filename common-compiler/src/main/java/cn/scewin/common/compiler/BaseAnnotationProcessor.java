@@ -11,6 +11,7 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
@@ -29,6 +30,11 @@ public abstract class BaseAnnotationProcessor extends AbstractProcessor {
     protected Filer filer;
     protected Elements elementsUtils;
     protected ProcessingEnvironment processingEnv;
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.RELEASE_8;
+    }
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {

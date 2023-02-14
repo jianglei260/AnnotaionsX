@@ -1,5 +1,6 @@
 package cn.scewin.gr.compiler;
 
+import com.google.auto.service.AutoService;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -8,6 +9,7 @@ import com.squareup.javapoet.TypeSpec;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
@@ -18,6 +20,7 @@ import cn.scewin.common.compiler.BaseAnnotationProcessor;
 import cn.scewin.gr.AutoHolder;
 import cn.scewin.gr.HoldValue;
 
+@AutoService(Processor.class)
 public class AutoHolderProcessor extends BaseAnnotationProcessor {
 
     @Override

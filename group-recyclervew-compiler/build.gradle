@@ -19,14 +19,18 @@ dependencies {
 afterEvaluate {
     publishing {
         publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                // Applies the component for the release build variant.
+
+            // Creates a Maven publication called "myPublication".
+            myPublication(MavenPublication) {
                 from components.java
-                // You can then customize attributes of the publication as shown below.
-                groupId = rootProject.ext.groupId
-                version = rootProject.ext.version
+                groupId rootProject.ext.groupId
+                version rootProject.ext.version
             }
+        }
+
+        // Repositories *to* which Gradle can publish artifacts
+        repositories {
+            mavenLocal()
         }
     }
 }

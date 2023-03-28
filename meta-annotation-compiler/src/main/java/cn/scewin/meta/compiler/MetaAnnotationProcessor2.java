@@ -42,14 +42,12 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 
 import cn.scewin.annotionsx.common.utils.StringUtil;
-import cn.scewin.annotionsx.common.utils.TypeNameUtil;
 import cn.scewin.common.compiler.BaseAnnotationProcessor;
 import cn.scewin.meta.MetaAnnotation;
 import cn.scewin.meta.MetaAnnotationManager;
 
 @SupportedAnnotationTypes("*")
-@AutoService(Processor.class)
-public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
+public class MetaAnnotationProcessor2 extends BaseAnnotationProcessor {
     private Types types;
     private Messager messager;
     private Filer filer;
@@ -84,48 +82,27 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                 buildCode(packageName, typeSpec);
                 if (targetTypes[0].equals(ElementType.TYPE)) {
                     typeAnnotations.put(metaAnnotation, element);
-                    List<? extends TypeMirror> childrenMirrors = new ArrayList<>();
-                    try {
-                        metaAnnotation.children();
-                    } catch (MirroredTypesException e) {
-                        childrenMirrors = e.getTypeMirrors();
-                    }
-                    for (TypeMirror childrenMirror : childrenMirrors) {
-                        TypeElement childElement = null;
-                        if (childrenMirror instanceof ArrayType) {
-                            String fullClassName = ((ArrayType) childrenMirror).getComponentType().toString();
-                            childElement = elementsUtils.getTypeElement(fullClassName);
-                        } else {
-                            String fullClassName = childrenMirror.toString();
-                            childElement = elementsUtils.getTypeElement(fullClassName);
-                        }
-                        if (childElement != null) {
-                            MetaAnnotation childMetaAnnotation = childElement.getAnnotation(MetaAnnotation.class);
-                            ElementType[] childElementTypes = childElement.getAnnotation(Target.class).value();
-                            if (childElementTypes[0].equals(ElementType.FIELD)) {
-                                filedAnnotationElements.add(childElement);
-                                if (fieldAnnotationMap.containsKey(metaAnnotation)) {
-                                    fieldAnnotationMap.get(metaAnnotation).add(childElement);
-                                } else {
-                                    List<TypeElement> list = new ArrayList<>();
-                                    list.add(childElement);
-                                    fieldAnnotationMap.put(metaAnnotation, list);
-                                }
-                            }
-                            if (childElementTypes[0].equals(ElementType.METHOD)) {
-                                methodAnnotationElements.add(childElement);
-                                if (methodAnnotationMap.containsKey(metaAnnotation)) {
-                                    methodAnnotationMap.get(metaAnnotation).add(childElement);
-                                } else {
-                                    List<TypeElement> list = new ArrayList<>();
-                                    list.add(childElement);
-                                    methodAnnotationMap.put(metaAnnotation, list);
-                                }
-                            }
-                        }
+                }
+                if (targetTypes[0].equals(ElementType.FIELD)) {
+                    filedAnnotationElements.add((TypeElement) element);
+                    if (fieldAnnotationMap.containsKey(metaAnnotation)) {
+                        fieldAnnotationMap.get(metaAnnotation).add((TypeElement) element);
+                    } else {
+                        List<TypeElement> list = new ArrayList<>();
+                        list.add((TypeElement) element);
+                        fieldAnnotationMap.put(metaAnnotation, list);
                     }
                 }
-
+                if (targetTypes[0].equals(ElementType.METHOD)) {
+                    methodAnnotationElements.add((TypeElement) element);
+                    if (methodAnnotationMap.containsKey(metaAnnotation)) {
+                        methodAnnotationMap.get(metaAnnotation).add((TypeElement) element);
+                    } else {
+                        List<TypeElement> list = new ArrayList<>();
+                        list.add((TypeElement) element);
+                        methodAnnotationMap.put(metaAnnotation, list);
+                    }
+                }
             }
         }
         messager.printMessage(Diagnostic.Kind.NOTE, "metaAnnotation count:" + typeAnnotations.size());
@@ -158,36 +135,30 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                     String returnName = StringUtil.lowerFirstChar(annotaionedElement.getSimpleName().toString());
                     initBuilder.addStatement("$T $N=new $T()", returnType, returnName, returnType);
                     inflateEntityValues(getElementAnnotationMirror(annotaionedElement, (TypeElement) element).getElementValues(), initBuilder, returnName);
-                    initBuilder.addStatement("$N.$L($S)", returnName, StringUtil.setMethodName("declareClass"), annotaionedElement.asType().toString());
                     initBuilder.addStatement("$N.add($N)", listName, returnName);
                     String innerClassBuilderName = annotaionedElement.getSimpleName().toString();
                     TypeSpec.Builder innerClassBuilder = TypeSpec.classBuilder(innerClassBuilderName);
                     innerClassBuilder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
                     String currentPath = typeName + "." + innerClassBuilderName;
-                    if (methodAnnotationMap.containsKey(metaAnnotation)) {
-                        for (TypeElement methodAnnotationElement : methodAnnotationMap.get(metaAnnotation)) {
-                            ClassName enclosedReturnType = ClassName.bestGuess((methodAnnotationElement).getQualifiedName().toString() + metaAnnotation.entitySuffix());
-                            String enclosedListName = returnName + methodAnnotationElement.getSimpleName().toString() + "s";
-                            initBuilder.addStatement("$T $N=new $T()", ParameterizedTypeName.get(ClassName.get(List.class), enclosedReturnType), enclosedListName, ClassName.get(ArrayList.class));
-                            initBuilder.addStatement("$N.$L($N)", returnName, StringUtil.setMethodName(StringUtil.lowerFirstChar(methodAnnotationElement.getSimpleName().toString()) + "s"), enclosedListName);
-                        }
+                    for (TypeElement methodAnnotationElement : methodAnnotationElements) {
+                        ClassName enclosedReturnType = ClassName.bestGuess((methodAnnotationElement).getQualifiedName().toString() + metaAnnotation.entitySuffix());
+                        String enclosedListName = returnName + methodAnnotationElement.getSimpleName().toString() + "s";
+                        initBuilder.addStatement("$T $N=new $T()", ParameterizedTypeName.get(ClassName.get(List.class), enclosedReturnType), enclosedListName, ClassName.get(ArrayList.class));
+                        initBuilder.addStatement("$N.$L($N)", returnName, StringUtil.setMethodName(StringUtil.lowerFirstChar(methodAnnotationElement.getSimpleName().toString()) + "s"), enclosedListName);
                     }
-                    if (fieldAnnotationMap.containsKey(metaAnnotation)) {
-                        for (TypeElement filedAnnotationElement : fieldAnnotationMap.get(metaAnnotation)) {
-                            ClassName enclosedReturnType = ClassName.bestGuess((filedAnnotationElement).getQualifiedName().toString() + metaAnnotation.entitySuffix());
-                            String enclosedListName = returnName + filedAnnotationElement.getSimpleName().toString() + "s";
-                            initBuilder.addStatement("$T $N=new $T()", ParameterizedTypeName.get(ClassName.get(List.class), enclosedReturnType), enclosedListName, ClassName.get(ArrayList.class));
-                            initBuilder.addStatement("$N.$L($N)", returnName, StringUtil.setMethodName(StringUtil.lowerFirstChar(filedAnnotationElement.getSimpleName().toString()) + "s"), enclosedListName);
-                        }
+                    for (TypeElement filedAnnotationElement : filedAnnotationElements) {
+                        ClassName enclosedReturnType = ClassName.bestGuess((filedAnnotationElement).getQualifiedName().toString() + metaAnnotation.entitySuffix());
+                        String enclosedListName = returnName + filedAnnotationElement.getSimpleName().toString() + "s";
+                        initBuilder.addStatement("$T $N=new $T()", ParameterizedTypeName.get(ClassName.get(List.class), enclosedReturnType), enclosedListName, ClassName.get(ArrayList.class));
+                        initBuilder.addStatement("$N.$L($N)", returnName, StringUtil.setMethodName(StringUtil.lowerFirstChar(filedAnnotationElement.getSimpleName().toString()) + "s"), enclosedListName);
                     }
-
                     for (Element enclosedElement : annotaionedElement.getEnclosedElements()) {
-                        if (enclosedElement instanceof ExecutableElement && methodAnnotationMap.containsKey(metaAnnotation)) {
-                            getAnnotation(methodAnnotationMap.get(metaAnnotation), enclosedElement, innerClassBuilder, currentPath);
-                            inflateEnclosedAnnotation(methodAnnotationMap.get(metaAnnotation), enclosedElement, initBuilder, innerClassBuilderName, returnName);
-                        } else if (enclosedElement instanceof VariableElement && fieldAnnotationMap.containsKey(metaAnnotation)) {
-                            getAnnotation(fieldAnnotationMap.get(metaAnnotation), enclosedElement, innerClassBuilder, currentPath);
-                            inflateEnclosedAnnotation(fieldAnnotationMap.get(metaAnnotation), enclosedElement, initBuilder, innerClassBuilderName, returnName);
+                        if (enclosedElement instanceof ExecutableElement) {
+                            getAnnotation(methodAnnotationElements, enclosedElement, innerClassBuilder, currentPath);
+                            inflateEnclosedAnnotation(methodAnnotationElements, enclosedElement, initBuilder, innerClassBuilderName, returnName);
+                        } else if (enclosedElement instanceof VariableElement) {
+                            getAnnotation(filedAnnotationElements, enclosedElement, innerClassBuilder, currentPath);
+                            inflateEnclosedAnnotation(filedAnnotationElements, enclosedElement, initBuilder, innerClassBuilderName, returnName);
                         }
                     }
                     constantsBuilder.addType(innerClassBuilder.build());
@@ -195,9 +166,7 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                 initBuilder.addStatement("return $N", listName);
                 entityBuilder.addMethod(initBuilder.build());
                 annotationsBuilder.addStaticBlock(staticBuilder.build());
-                if (metaAnnotation.buildRefs()) {
-                    buildCode(packageName, constantsBuilder);
-                }
+                buildCode(packageName, constantsBuilder);
                 buildCode(packageName, entityBuilder);
                 buildCode(packageName, annotationsBuilder);
             }
@@ -238,9 +207,6 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                 methodBuilder.addStatement("$T $N=new $T()", returnType, currentVarName, returnType);
                 Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues = annotationMirror.getElementValues();
                 inflateEntityValues(elementValues, methodBuilder, currentVarName);
-                methodBuilder.addStatement("$N.$L($S)", varName, StringUtil.setMethodName("fieldType"), enclosedElement.asType().toString());
-                methodBuilder.addStatement("$N.$L($S)", varName, StringUtil.setMethodName("fieldName"), enclosedElement.getSimpleName().toString());
-                methodBuilder.addStatement("$N.$L($S)", varName, StringUtil.setMethodName("declareClass"), enclosedElement.getEnclosingElement().asType().toString());
                 String enclosedListName = varName + annotationTypeElement.getSimpleName().toString() + "s";
                 methodBuilder.addStatement("$N.add($N)", enclosedListName, currentVarName);
             }
@@ -389,9 +355,6 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
         for (TypeMirror childrenMirror : childrenMirrors) {
             buildChildAnnotationType(childrenMirror, typeBuilder, "");
         }
-        buildTypeField(typeBuilder, TypeName.get(String.class), "declareClass");
-        buildTypeField(typeBuilder, TypeName.get(String.class), "fieldType");
-        buildTypeField(typeBuilder, TypeName.get(String.class), "fieldName");
         return typeBuilder.build();
     }
 
@@ -439,17 +402,6 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
         if (returnTypeName.equals(TypeName.get(Class.class))) {
             returnTypeName = TypeName.get(String.class);
         }
-        if (returnTypeName instanceof ParameterizedTypeName) {
-            ParameterizedTypeName parameterizedTypeName = (ParameterizedTypeName) returnTypeName;
-            if (parameterizedTypeName.rawType.equals(ClassName.get(Class.class))) {
-                returnTypeName = TypeName.get(String.class);
-            }
-        }
-        buildTypeField(typeBuilder, returnTypeName, name);
-
-    }
-
-    public void buildTypeField(TypeSpec.Builder typeBuilder, TypeName returnTypeName, String name) {
         FieldSpec.Builder fieldBuilder = FieldSpec.builder(returnTypeName, name, Modifier.PRIVATE);
         typeBuilder.addField(fieldBuilder.build());
         MethodSpec.Builder setMethodBuilder = MethodSpec.methodBuilder(StringUtil.setMethodName(name));

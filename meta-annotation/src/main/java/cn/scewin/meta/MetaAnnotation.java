@@ -14,6 +14,8 @@ public @interface MetaAnnotation {
 
     boolean buildConstants() default true;
 
+    boolean buildRefs() default false;
+
     String entitySuffix() default "Info";
 
 }

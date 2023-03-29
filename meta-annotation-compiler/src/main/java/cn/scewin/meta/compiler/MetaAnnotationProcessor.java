@@ -10,7 +10,9 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.sun.tools.javac.code.Attribute;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.util.Pair;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
@@ -238,9 +240,9 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                 methodBuilder.addStatement("$T $N=new $T()", returnType, currentVarName, returnType);
                 Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues = annotationMirror.getElementValues();
                 inflateEntityValues(elementValues, methodBuilder, currentVarName);
-                methodBuilder.addStatement("$N.$L($S)", varName, StringUtil.setMethodName("fieldType"), enclosedElement.asType().toString());
-                methodBuilder.addStatement("$N.$L($S)", varName, StringUtil.setMethodName("fieldName"), enclosedElement.getSimpleName().toString());
-                methodBuilder.addStatement("$N.$L($S)", varName, StringUtil.setMethodName("declareClass"), enclosedElement.getEnclosingElement().asType().toString());
+                methodBuilder.addStatement("$N.$L($S)", currentVarName, StringUtil.setMethodName("fieldType"), enclosedElement.asType().toString());
+                methodBuilder.addStatement("$N.$L($S)", currentVarName, StringUtil.setMethodName("fieldName"), enclosedElement.getSimpleName().toString());
+                methodBuilder.addStatement("$N.$L($S)", currentVarName, StringUtil.setMethodName("declareClass"), enclosedElement.getEnclosingElement().asType().toString());
                 String enclosedListName = varName + annotationTypeElement.getSimpleName().toString() + "s";
                 methodBuilder.addStatement("$N.add($N)", enclosedListName, currentVarName);
             }
@@ -249,41 +251,66 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
 
     public void inflateEntityValues(Map<? extends ExecutableElement, ? extends AnnotationValue> elementValues, MethodSpec.Builder methodBuilder, String varName) {
         for (ExecutableElement executableElement : elementValues.keySet()) {
-            String callMethodName = StringUtil.setMethodName(executableElement.getSimpleName().toString());
-            if (elementValues.get(executableElement) instanceof AnnotationMirror) {
-                AnnotationMirror annotationMirror = (AnnotationMirror) elementValues.get(executableElement).getValue();
-                String currentVarName = varName + executableElement.getSimpleName().toString();
-                TypeElement annotationTypeElement = (TypeElement) annotationMirror.getAnnotationType().asElement();
-                MetaAnnotation metaAnnotation = annotationTypeElement.getAnnotation(MetaAnnotation.class);
-                String typeName = annotationTypeElement.getQualifiedName().toString() + metaAnnotation.entitySuffix();
-                methodBuilder.addStatement("$T $N=new $T()", ClassName.bestGuess(typeName), currentVarName, ClassName.bestGuess(typeName));
-                inflateEntityValues(annotationMirror.getElementValues(), methodBuilder, currentVarName);
-                methodBuilder.addStatement("$N.$L($N)", varName, callMethodName, currentVarName);
-            } else {
-                Object value = elementValues.get(executableElement).getValue();
-//                messager.printMessage(Diagnostic.Kind.NOTE,"------------find class type:"+value.getClass().getName());
-                if (executableElement.getReturnType() instanceof ArrayType) {
-                    List<Attribute> attributes = (List<Attribute>) value;
-                    List values = new ArrayList();
-                    StringBuilder codeBuilder = new StringBuilder();
-                    for (int i = 0; i < attributes.size(); i++) {
-                        Object obj = attributes.get(i).getValue();
-                        values.add(obj);
-                        codeBuilder.append(getVarType(obj));
-                        if (i < attributes.size() - 1) {
-                            codeBuilder.append(",");
-                        }
-                    }
-                    values.add(0, varName);
-                    values.add(1, callMethodName);
-                    values.add(2, ClassName.get(Arrays.class));
-                    methodBuilder.addStatement("$N.$L($T.asList(" + codeBuilder + "))", values.toArray());
-                } else {
-                    if (value instanceof Type.ClassType) {
-                        value = ((Type.ClassType) value).toString();
-                    }
-                    methodBuilder.addStatement("$N.$L(" + getVarType(value) + ")", varName, callMethodName, value);
+            handleInflateEntityValues(executableElement.getSimpleName().toString(), elementValues.get(executableElement).getValue(), executableElement.getReturnType(), methodBuilder, varName);
+        }
+    }
+
+    public void handleInflateEntityValues(String executableName, Object attribute, TypeMirror returnType, MethodSpec.Builder methodBuilder, String varName) {
+        String callMethodName = StringUtil.setMethodName(executableName);
+        if (attribute instanceof AnnotationMirror) {
+            AnnotationMirror annotationMirror = (AnnotationMirror) attribute;
+            String currentVarName = varName + executableName;
+            TypeElement annotationTypeElement = (TypeElement) annotationMirror.getAnnotationType().asElement();
+            MetaAnnotation metaAnnotation = annotationTypeElement.getAnnotation(MetaAnnotation.class);
+            String typeName = annotationTypeElement.getQualifiedName().toString() + metaAnnotation.entitySuffix();
+            methodBuilder.addStatement("$T $N=new $T()", ClassName.bestGuess(typeName), currentVarName, ClassName.bestGuess(typeName));
+            inflateEntityValues(annotationMirror.getElementValues(), methodBuilder, currentVarName);
+            methodBuilder.addStatement("$N.$L($N)", varName, callMethodName, currentVarName);
+        } else {
+            Object value = attribute;
+            if (returnType instanceof ArrayType) {
+//                List<Attribute> attributes = (List<Attribute>) value;
+                List<Attribute> attributes = new ArrayList<>();
+                if (value instanceof Attribute.Array) {
+                    Attribute.Array attributeArray = (Attribute.Array) value;
+                    attributes = attributeArray.getValue();
+                } else if (value instanceof List) {
+                    attributes = (List<Attribute>) value;
                 }
+                List values = new ArrayList();
+                StringBuilder codeBuilder = new StringBuilder();
+                for (int i = 0; i < attributes.size(); i++) {
+                    Object obj = attributes.get(i).getValue();
+                    if (obj instanceof Attribute.Compound) {
+                        Attribute.Compound compound = (Attribute.Compound) obj;
+                        com.sun.tools.javac.util.List<Pair<Symbol.MethodSymbol, Attribute>> compoundAttrs = compound.values;
+                        String childVarName = varName + executableName + i;
+                        String typeName = compound.type.asElement().getQualifiedName().toString() + "Info";
+                        methodBuilder.addStatement("$T $N=new $T()", ClassName.bestGuess(typeName), childVarName, ClassName.bestGuess(typeName));
+                        for (Pair<Symbol.MethodSymbol, Attribute> compoundAttr : compoundAttrs) {
+                            handleInflateEntityValues(compoundAttr.fst.name.toString(), compoundAttr.snd.getValue(), compoundAttr.fst.getReturnType(), methodBuilder, childVarName);
+                        }
+                        values.add(childVarName);
+                    } else {
+                        values.add(obj);
+                    }
+                    codeBuilder.append(getVarType(obj));
+                    if (i < attributes.size() - 1) {
+                        codeBuilder.append(",");
+                    }
+                }
+                values.add(0, varName);
+                values.add(1, callMethodName);
+                values.add(2, ClassName.get(Arrays.class));
+                methodBuilder.addStatement("$N.$L($T.asList(" + codeBuilder + "))", values.toArray());
+            } else if (value instanceof Symbol.VarSymbol) {
+                Symbol.VarSymbol varSymbol = (Symbol.VarSymbol) value;
+                methodBuilder.addStatement("$N.$L($T." + getVarType(value) + ")", varName, callMethodName, TypeName.get(varSymbol.type), varSymbol.getSimpleName().toString());
+            } else {
+                if (value instanceof Type) {
+                    value = ((Type) value).toString();
+                }
+                methodBuilder.addStatement("$N.$L(" + getVarType(value) + ")", varName, callMethodName, value);
             }
         }
     }
@@ -362,6 +389,8 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
             return "$S";
         } else if (value instanceof Boolean) {
             return "$L";
+        } else if (value instanceof Type.ClassType) {
+            return "$S";
         }
         return "$L";
     }

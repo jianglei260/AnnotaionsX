@@ -130,7 +130,6 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
 
             }
         }
-        messager.printMessage(Diagnostic.Kind.NOTE, "metaAnnotation count:" + typeAnnotations.size());
         for (MetaAnnotation metaAnnotation : typeAnnotations.keySet()) {
             if (metaAnnotation.buildConstants()) {
                 Element element = typeAnnotations.get(metaAnnotation);
@@ -186,6 +185,7 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                     for (Element enclosedElement : annotaionedElement.getEnclosedElements()) {
                         if (enclosedElement instanceof ExecutableElement && methodAnnotationMap.containsKey(metaAnnotation)) {
                             getAnnotation(methodAnnotationMap.get(metaAnnotation), enclosedElement, innerClassBuilder, currentPath);
+                            ExecutableElement executableElement= (ExecutableElement) enclosedElement;
                             inflateEnclosedAnnotation(methodAnnotationMap.get(metaAnnotation), enclosedElement, initBuilder, innerClassBuilderName, returnName);
                         } else if (enclosedElement instanceof VariableElement && fieldAnnotationMap.containsKey(metaAnnotation)) {
                             getAnnotation(fieldAnnotationMap.get(metaAnnotation), enclosedElement, innerClassBuilder, currentPath);
@@ -200,8 +200,8 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                 if (metaAnnotation.buildRefs()) {
                     buildCode(packageName, constantsBuilder);
                 }
-                buildCode(packageName, entityBuilder);
                 buildCode(packageName, annotationsBuilder);
+                buildCode(packageName, entityBuilder);
             }
         }
         return false;

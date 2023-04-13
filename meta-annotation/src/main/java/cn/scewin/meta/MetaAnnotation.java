@@ -10,6 +10,8 @@ import java.lang.annotation.Target;
 public @interface MetaAnnotation {
     Class[] children() default {};
 
+    Class entityClass() default void.class;
+
     boolean buildEntityClass() default true;
 
     boolean buildConstants() default true;

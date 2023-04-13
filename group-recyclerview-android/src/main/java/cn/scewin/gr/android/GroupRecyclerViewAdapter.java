@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cn.scewin.annotionsx.common.utils.ObjectUtil;
 
 
 public class GroupRecyclerViewAdapter<K, T> extends RecyclerView.Adapter<AutoViewHolder> {
@@ -67,31 +68,39 @@ public class GroupRecyclerViewAdapter<K, T> extends RecyclerView.Adapter<AutoVie
         }
         this.datas = datas;
         this.checkItems = new boolean[datas.size()];
+        boolean hasGroup = ObjectUtil.isNotEmpty(keyField);
         try {
             field = dataClass.getDeclaredField(keyField);
             field.setAccessible(true);
+            hasGroup = true;
         } catch (Exception e) {
             e.printStackTrace();
+            hasGroup = false;
         }
         if (datas != null) {
-            try {
-                dataMap = DataObjectManager.getInstance().mapObjects(datas, keyField, groupClass, dataClass);
-                keys = new ArrayList<>(dataMap.size());
-                allObjects = new ArrayList();
-                for (K k : dataMap.keySet()) {
-                    keys.add(k);
+            if (hasGroup) {
+                try {
+                    dataMap = DataObjectManager.getInstance().mapObjects(datas, keyField, groupClass, dataClass);
+                    keys = new ArrayList<>(dataMap.size());
+                    allObjects = new ArrayList();
+                    for (K k : dataMap.keySet()) {
+                        keys.add(k);
+                    }
+                    if (comparator != null) {
+                        Collections.sort(keys, comparator);
+                    }
+                    for (K key : keys) {
+                        allObjects.add(key);
+                        allObjects.addAll(dataMap.get(key));
+                    }
+                    notifyDataSetChanged();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                if (comparator != null) {
-                    Collections.sort(keys, comparator);
-                }
-                for (K key : keys) {
-                    allObjects.add(key);
-                    allObjects.addAll(dataMap.get(key));
-                }
-                notifyDataSetChanged();
-            } catch (Exception e) {
-                e.printStackTrace();
+            } else {
+                allObjects.addAll(datas);
             }
+
         }
     }
 

@@ -68,6 +68,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
+import javax.tools.Diagnostic;
 
 import cn.scewin.annotionsx.common.utils.StringUtil;
 import cn.scewin.annotionsx.common.utils.TypeNameUtil;
@@ -83,13 +84,6 @@ public class OrmPlusProcessor extends BaseAnnotationProcessor {
         entitiyInfos.addAll(generateByEntity(entityElements));
         List<EntitiyInfo> infos = new ArrayList<>();
         infos.addAll(entitiyInfos);
-        Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(Entity.class);
-        List<EntitiyInfo> databaseEntitis = new ArrayList<>(elements.size());
-        for (Element element : elements) {
-            EntitiyInfo entitiyInfo = buildEntityInfo(element);
-            databaseEntitis.add(entitiyInfo);
-        }
-        infos.addAll(databaseEntitis);
         entitiyInfos.addAll(generateByQuery(infos, queryElements));
         try {
             for (EntitiyInfo entitiyInfo : entitiyInfos) {
@@ -99,6 +93,15 @@ public class OrmPlusProcessor extends BaseAnnotationProcessor {
                 typeSpecBuilder.addAnnotation(annotationBuilder.build());
                 buildCode(entitiyInfo.getPackageName(), typeSpecBuilder);
             }
+            messager.printMessage(Diagnostic.Kind.NOTE, "entity num" + entitiyInfos.size());
+            Set<? extends Element> elements = roundEnv.getElementsAnnotatedWith(Entity.class);
+            messager.printMessage(Diagnostic.Kind.NOTE, "elements num" + elements.size());
+            List<EntitiyInfo> databaseEntitis = new ArrayList<>(elements.size());
+            for (Element element : elements) {
+                EntitiyInfo entitiyInfo = buildEntityInfo(element);
+                databaseEntitis.add(entitiyInfo);
+            }
+            entitiyInfos.addAll(databaseEntitis);
             saveToFileWithTail(entitiyInfos, "entity");
         } catch (Exception e) {
             e.printStackTrace();
@@ -661,8 +664,8 @@ public class OrmPlusProcessor extends BaseAnnotationProcessor {
         Set<String> types = new HashSet<>();
         types.add(EntityGenerate.class.getName());
         types.add(QueryDao.class.getName());
-        types.add(Entity.class.getCanonicalName());
-        types.add(Dao.class.getCanonicalName());
+        types.add(Entity.class.getName());
+        types.add(Dao.class.getName());
         return types;
     }
 }

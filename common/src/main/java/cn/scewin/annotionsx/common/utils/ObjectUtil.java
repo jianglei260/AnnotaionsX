@@ -128,18 +128,20 @@ public class ObjectUtil {
             default:
                 if (type.contains("<")) {
                     return Class.forName(type.substring(0, type.indexOf('<')));
+                } else if (type.contains("[]")) {
+                    return Array.newInstance(getClassType(type.substring(0,type.indexOf('['))),0).getClass();
                 } else {
                     return Class.forName(type);
                 }
         }
     }
 
-    public static Object invokeMethodByJsonParam(Gson gson,Method method, String args) throws Exception {
+    public static Object invokeMethodByJsonParam(Gson gson, Method method, String args) throws Exception {
         Object obj = method.getDeclaringClass().newInstance();
-        return invokeMethodByJsonParam(gson,method, obj, args);
+        return invokeMethodByJsonParam(gson, method, obj, args);
     }
 
-    public static Object invokeMethodByDefaultArgAndJsonParam(Gson gson,Method method, Object obj, Object defaultArg, String argJson) throws Exception {
+    public static Object invokeMethodByDefaultArgAndJsonParam(Gson gson, Method method, Object obj, Object defaultArg, String argJson) throws Exception {
         Parameter[] parameters = method.getParameters();
         JsonParser parser = new JsonParser();
         Object result = null;
@@ -154,7 +156,7 @@ public class ObjectUtil {
                     }
                 } else {
                     JsonElement jsonElement = root.get(parameters[i].getName());
-                    args[i] = inflateArgs(gson,jsonElement, parameters[i], paramType);
+                    args[i] = inflateArgs(gson, jsonElement, parameters[i], paramType);
                 }
             }
             result = method.invoke(obj, args);
@@ -165,7 +167,7 @@ public class ObjectUtil {
 
     }
 
-    public static Object invokeMethodByJsonParam(Gson gson,Method method, Object obj, String argJson) throws Exception {
+    public static Object invokeMethodByJsonParam(Gson gson, Method method, Object obj, String argJson) throws Exception {
         Parameter[] parameters = method.getParameters();
         JsonParser parser = new JsonParser();
         Object result = null;
@@ -175,7 +177,7 @@ public class ObjectUtil {
             for (int i = 0; i < parameters.length; i++) {
                 Class paramType = parameters[i].getType();
                 JsonElement jsonElement = root.get(parameters[i].getName());
-                args[i] = inflateArgs(gson,jsonElement, parameters[i], paramType);
+                args[i] = inflateArgs(gson, jsonElement, parameters[i], paramType);
             }
             result = method.invoke(obj, args);
         } else {
@@ -184,7 +186,7 @@ public class ObjectUtil {
         return result;
     }
 
-    public static Object inflateArgs(Gson gson,JsonElement jsonElement, Parameter parameter, Class paramType) {
+    public static Object inflateArgs(Gson gson, JsonElement jsonElement, Parameter parameter, Class paramType) {
         Object result = null;
         if (paramType.isArray() || Collection.class.isAssignableFrom(paramType)) {
             JsonArray jsonArray = jsonElement.getAsJsonArray();
@@ -194,7 +196,7 @@ public class ObjectUtil {
                 if (rawType != null) {
                     result = new ArrayList<>();
                     for (JsonElement element : jsonArray) {
-                        ((List) result).add(inflateArgs(gson,element, parameter, rawType));
+                        ((List) result).add(inflateArgs(gson, element, parameter, rawType));
                     }
                 }
             }

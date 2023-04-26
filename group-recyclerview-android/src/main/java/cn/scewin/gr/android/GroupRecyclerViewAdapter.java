@@ -152,37 +152,15 @@ public class GroupRecyclerViewAdapter<K, T> extends RecyclerView.Adapter<AutoVie
             if (dataViewHolderBinder != null) {
                 dataViewHolderBinder.onBindViewHolder(holder, o, position);
             }
-            if (checkMode) {
-                holder.checkBox.setVisibility(View.VISIBLE);
-            } else {
-                holder.checkBox.setVisibility(View.GONE);
-            }
-            if (checkMode) {
-                int dataPosition = datas.indexOf(o);
-                holder.checkBox.setOnCheckedChangeListener(null);
-                boolean checked = checkItems[dataPosition];
-                holder.checkBox.setChecked(checked);
-                holder.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        checkItems[dataPosition] = isChecked;
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (dataRecyclerItemClickListener != null) {
+                        dataRecyclerItemClickListener.onClick(v, (T) o, holder.getAdapterPosition());
                     }
-                });
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                    }
-                });
-            } else {
-                holder.itemView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (dataRecyclerItemClickListener != null) {
-                            dataRecyclerItemClickListener.onClick(v, (T) o, holder.getAdapterPosition());
-                        }
-                    }
-                });
-            }
+                }
+            });
+
         }
     }
 

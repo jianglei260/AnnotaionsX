@@ -17,17 +17,15 @@ import cn.scewin.gr.R;
 
 
 public class AutoViewHolder extends RecyclerView.ViewHolder {
-    public CheckBox checkBox;
     public static <T extends AutoViewHolder> T of(Class<T> holderClass, ViewGroup parent, LayoutInflater inflater) {
 //        ViewBinding binding = Res.getInstance().getBinding(layoutRes, inflater);
         int layoutRes = holderClass.getAnnotation(AutoHolder.class).value();
-        RelativeLayout root = (RelativeLayout) inflater.inflate(R.layout.layout_auto_view_holder, parent, false);
-        LinearLayout container = root.findViewById(R.id.container);
+        RelativeLayout container = (RelativeLayout) inflater.inflate(R.layout.layout_auto_view_holder, parent, false);
         View itemView = inflater.inflate(layoutRes, container, false);
         T holder = null;
         try {
             container.addView(itemView);
-            holder = holderClass.getConstructor(View.class).newInstance(root);
+            holder = holderClass.getConstructor(View.class).newInstance(container);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -37,7 +35,6 @@ public class AutoViewHolder extends RecyclerView.ViewHolder {
     public AutoViewHolder(View itemView) {
         super(itemView);
         try {
-            checkBox = itemView.findViewById(R.id.check_box);
             Class helperClass = Class.forName("cn.scewin.gr.AutoHolderHelper");
             Method method = helperClass.getMethod("init", AutoViewHolder.class);
             method.invoke(null, this);

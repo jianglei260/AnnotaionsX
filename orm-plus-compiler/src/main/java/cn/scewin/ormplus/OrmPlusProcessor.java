@@ -106,6 +106,7 @@ public class OrmPlusProcessor extends BaseAnnotationProcessor {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        jdbc:mysql://gz-cynosdbmysql-grp-oog8qdrz.sql.tencentcdb.com:24425/lubmaster?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=true
         return false;
     }
 

@@ -20,12 +20,12 @@ public class AutoViewHolder extends RecyclerView.ViewHolder {
     public static <T extends AutoViewHolder> T of(Class<T> holderClass, ViewGroup parent, LayoutInflater inflater) {
 //        ViewBinding binding = Res.getInstance().getBinding(layoutRes, inflater);
         int layoutRes = holderClass.getAnnotation(AutoHolder.class).value();
-        RelativeLayout container = (RelativeLayout) inflater.inflate(R.layout.layout_auto_view_holder, parent, false);
-        View itemView = inflater.inflate(layoutRes, container, false);
+//        RelativeLayout container = (RelativeLayout) inflater.inflate(R.layout.layout_auto_view_holder, parent, false);
+        View itemView = inflater.inflate(layoutRes, parent, false);
         T holder = null;
         try {
-            container.addView(itemView);
-            holder = holderClass.getConstructor(View.class).newInstance(container);
+//            container.addView(itemView);
+            holder = holderClass.getConstructor(View.class).newInstance(itemView);
         } catch (Exception e) {
             e.printStackTrace();
         }

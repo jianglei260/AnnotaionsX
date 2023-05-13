@@ -30,4 +30,9 @@
       <module name="AnnotaionsX.entity-manager.test" target="1.8" />
     </bytecodeTargetLevel>
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="AnnotaionsX.meta-annotation-compiler.main" options="--add-exports jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED" />
+    </option>
+  </component>
 </project>

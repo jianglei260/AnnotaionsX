@@ -19,6 +19,7 @@ import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +57,11 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
     private Messager messager;
     private Filer filer;
     private Elements elementsUtils;
+    Map<MetaAnnotation, List<TypeElement>> fieldAnnotationMap = new HashMap<>();
+    Map<MetaAnnotation, List<TypeElement>> methodAnnotationMap = new HashMap<>();
+    List<Element> typeAnnotations = new ArrayList<>();
+    List<TypeElement> methodAnnotationElements = new ArrayList<>();
+    List<TypeElement> filedAnnotationElements = new ArrayList<>();
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -70,11 +76,7 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnvironment) {
         log("MetaAnnotationProcessor Start................");
         Set<? extends Element> elements = roundEnvironment.getElementsAnnotatedWith(MetaAnnotation.class);
-        Map<MetaAnnotation, List<TypeElement>> fieldAnnotationMap = new HashMap<>();
-        Map<MetaAnnotation, List<TypeElement>> methodAnnotationMap = new HashMap<>();
-        Map<MetaAnnotation, Element> typeAnnotations = new HashMap<>();
-        List<TypeElement> methodAnnotationElements = new ArrayList<>();
-        List<TypeElement> filedAnnotationElements = new ArrayList<>();
+
         for (Element element : elements) {
             MetaAnnotation metaAnnotation = element.getAnnotation(MetaAnnotation.class);
             Target target = element.getAnnotation(Target.class);
@@ -85,7 +87,7 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
                 String packageName = elementsUtils.getPackageOf(element).getQualifiedName().toString();
                 buildCode(packageName, typeSpec);
                 if (targetTypes[0].equals(ElementType.TYPE)) {
-                    typeAnnotations.put(metaAnnotation, element);
+                    typeAnnotations.add(element);
                     List<? extends TypeMirror> childrenMirrors = new ArrayList<>();
                     try {
                         metaAnnotation.children();
@@ -130,9 +132,9 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
 
             }
         }
-        for (MetaAnnotation metaAnnotation : typeAnnotations.keySet()) {
+        for ( Element element :typeAnnotations) {
+            MetaAnnotation metaAnnotation=element.getAnnotation(MetaAnnotation.class);
             if (metaAnnotation.buildConstants()) {
-                Element element = typeAnnotations.get(metaAnnotation);
                 TypeSpec.Builder entityBuilder = TypeSpec.classBuilder(element.getSimpleName().toString() + "AnnotationInfos");
                 entityBuilder.addModifiers(Modifier.PUBLIC);
 
@@ -319,7 +321,6 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
     public void getAnnotation(List<TypeElement> annotationTypeElements, Element enclosedElement, TypeSpec.Builder typeBuilder, String currentPath) {
         List<? extends AnnotationMirror> annotationMirrors = enclosedElement.getAnnotationMirrors();
         for (AnnotationMirror annotationMirror : annotationMirrors) {
-            messager.printMessage(Diagnostic.Kind.NOTE, "getAnnotation:" + annotationTypeElements.size() + " -- " + annotationMirror.toString());
             if (annotationTypeElements.contains(annotationMirror.getAnnotationType().asElement())) {
                 String enclosedBuilderName = enclosedElement.getSimpleName().toString();
                 TypeSpec.Builder enclosedBuilder = TypeSpec.classBuilder(enclosedBuilderName);
@@ -397,7 +398,6 @@ public class MetaAnnotationProcessor extends BaseAnnotationProcessor {
 
     public TypeSpec buildEntityClass(MetaAnnotation metaAnnotation, TypeElement element) {
         String typeName = element.getSimpleName().toString() + metaAnnotation.entitySuffix();
-        messager.printMessage(Diagnostic.Kind.NOTE, "handle : " + typeName);
         TypeSpec.Builder typeBuilder = TypeSpec.classBuilder(typeName);
         typeBuilder.addModifiers(Modifier.PUBLIC);
         List<? extends TypeMirror> childrenMirrors = new ArrayList<>();

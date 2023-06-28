@@ -90,13 +90,14 @@ public class BroadcastProcessor extends BaseAnnotationProcessor {
                 sendMethodBuilder.addParameter(ParameterSpec.builder(typeName, name).build());
                 TypeElement paramElement = elementsUtils.getTypeElement(parameter.asType().toString());
                 boolean isParcelable = false;
-                for (TypeMirror anInterface : paramElement.getInterfaces()) {
-                    if (anInterface.toString().equals("android.os.Parcelable")) {
-                        isParcelable = true;
-                        break;
+                if (paramElement!=null){
+                    for (TypeMirror anInterface : paramElement.getInterfaces()) {
+                        if (anInterface.toString().equals("android.os.Parcelable")) {
+                            isParcelable = true;
+                            break;
+                        }
                     }
                 }
-
                 if (typeName.isPrimitive() || typeName.isBoxedPrimitive() || typeName.equals(ClassName.get(String.class))) {
                     sendMethodBuilder.addStatement("intent.putExtra($S,$N)", name, name);
                     if (typeName.equals(TypeName.INT) || typeName.equals(TypeName.INT.box())) {
@@ -108,7 +109,7 @@ public class BroadcastProcessor extends BaseAnnotationProcessor {
                     } else if (typeName.equals(TypeName.DOUBLE) || typeName.equals(TypeName.DOUBLE.box())) {
                         invokeMethodBuilder.addStatement("$T $N=intent.getDoubleExtra($S,0d)", typeName, name, name);
                     } else if (typeName.equals(TypeName.BOOLEAN) || typeName.equals(TypeName.BOOLEAN.box())) {
-                        invokeMethodBuilder.addStatement("$T $N=intent.getBooleanExtra($S,0l)", typeName, name, name);
+                        invokeMethodBuilder.addStatement("$T $N=intent.getBooleanExtra($S,false)", typeName, name, name);
                     } else {
                         invokeMethodBuilder.addStatement("$T $N=intent.getStringExtra($S)", typeName, name, name);
                     }
